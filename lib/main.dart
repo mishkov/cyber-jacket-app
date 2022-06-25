@@ -54,74 +54,61 @@ class _MyHomePageState extends State<MyHomePage> {
   final _bluetooth = FlutterBluetoothSerial.instance;
   final _devices = <BluetoothDevice>[];
   final _controller = ScrollController();
-  Stream<BluetoothState>? _bluetoothStateStream;
+  String _bluetoothConnectionStatus = 'No bluetooth connection';
+  BluetoothConnection? _connection;
 
   @override
   void initState() {
     super.initState();
-    _bluetoothStateStream = _bluetooth.onStateChanged();
   }
 
-  Future<void> _connectToDevice(String address) async {
+  Future<void> _connectToDevice(BluetoothDevice device) async {
     try {
-      BluetoothConnection connection =
-          await BluetoothConnection.toAddress(address);
+      _connection = await BluetoothConnection.toAddress(device.address);
       setState(() {
-        print('Connected to the device');
+        _bluetoothConnectionStatus =
+            'Connected to ${device.name ?? device.address}';
       });
 
-      connection.input?.listen((Uint8List data) {
+      _connection!.input?.listen((Uint8List data) {
         print('Data incoming: ${ascii.decode(data)}');
-        connection.output.add(data); // Sending data
+        _connection!.output.add(data); // Sending data
 
         if (ascii.decode(data).contains('!')) {
-          connection.finish();
-          setState(() {}); // Closing connection
-          print('Disconnecting by local host');
+          _connection!.finish();
+          setState(() {
+            _bluetoothConnectionStatus = 'Bluetooth connection is finished';
+          });
         }
       }).onDone(() {
-        setState(() {});
-        print('Disconnected by remote request');
+        setState(() {
+          _bluetoothConnectionStatus = 'Bluetooth connection is done';
+        });
       });
     } catch (exception) {
-      setState(() {});
-      print('Cannot connect, exception occured');
+      setState(() {
+        _bluetoothConnectionStatus = 'Cannot connect, exception occured';
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    const statusTextStyle = TextStyle(
-      color: Colors.white,
-    );
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cyber Jacket'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(30.0),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                StreamBuilder<BluetoothState>(
-                  stream: _bluetoothStateStream,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return Text(
-                        snapshot.data!.stringValue,
-                        style: statusTextStyle,
-                      );
-                    } else {
-                      return const Text(
-                        'Unknown bluetooth state',
-                        style: statusTextStyle,
-                      );
-                    }
-                  },
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                _bluetoothConnectionStatus,
+                style: const TextStyle(
+                  color: Colors.white,
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -142,31 +129,48 @@ class _MyHomePageState extends State<MyHomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              ElevatedButton(
-                onPressed: () async {
-                  setState(() {
-                    _devices.clear();
-                  });
-                  if (!(await _bluetooth.isEnabled ?? false)) {
-                    await _bluetooth.requestEnable();
-                  }
-                  final scaning = _bluetooth.startDiscovery();
-                  scaning.listen((event) {
-                    setState(() {
-                      _devices.add(event.device);
-                      if (_controller.hasClients) {
-                        // TODO: Check behavior of this code
-                        _controller
-                            .jumpTo(_controller.position.maxScrollExtent);
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: _connection == null
+                        ? null
+                        : () async {
+                            await _connection?.finish();
+                            _connection?.dispose();
+                          },
+                    child: const Text('Disconnect'),
+                  ),
+                  const SizedBox(
+                    width: 8,
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      setState(() {
+                        _devices.clear();
+                      });
+                      if (!(await _bluetooth.isEnabled ?? false)) {
+                        await _bluetooth.requestEnable();
                       }
-                    });
-                  }, onError: (error, stackTrace) {
-                    log('$error -> $stackTrace');
-                  }, onDone: () {
-                    log('scanning stream is done');
-                  });
-                },
-                child: const Text('Scan'),
+                      final scaning = _bluetooth.startDiscovery();
+                      scaning.listen((event) {
+                        setState(() {
+                          _devices.add(event.device);
+                          if (_controller.hasClients) {
+                            // TODO: Check behavior of this code
+                            _controller
+                                .jumpTo(_controller.position.maxScrollExtent);
+                          }
+                        });
+                      }, onError: (error, stackTrace) {
+                        log('$error -> $stackTrace');
+                      }, onDone: () {
+                        log('scanning stream is done');
+                      });
+                    },
+                    child: const Text('Scan'),
+                  ),
+                ],
               ),
               Expanded(
                 child: _devices.isNotEmpty
@@ -179,7 +183,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           return AvailableDevice(
                             device: device,
                             onConnect: () {
-                              _connectToDevice(device.address);
+                              _connectToDevice(device);
                             },
                           );
                         },
