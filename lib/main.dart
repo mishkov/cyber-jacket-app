@@ -7,7 +7,12 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'sliver_list_with_contoller_layout.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    BlocProvider(
+      create: (context) => BluetoothConnectionCubit(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -21,18 +26,11 @@ class MyApp extends StatelessWidget {
       onGenerateRoute: (routeSettings) {
         return MaterialPageRoute(
           builder: (context) {
-            return BlocProvider(
-              create: (context) => BluetoothConnectionCubit(),
-              child: Builder(
-                builder: (context) {
-                  if (routeSettings.name == ChatScreen.route) {
-                    return const ChatScreen();
-                  } else {
-                    return const MyHomePage();
-                  }
-                },
-              ),
-            );
+            if (routeSettings.name == ChatScreen.route) {
+              return const ChatScreen();
+            } else {
+              return const MyHomePage();
+            }
           },
         );
       },
