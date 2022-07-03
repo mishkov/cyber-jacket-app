@@ -149,6 +149,10 @@ class BluetoothConnectionCubit extends Cubit<BluetoothConnectionState> {
     final data = Uint8List.fromList(image);
     _connection?.output.add(data); // Sending data
   }
+
+  Future<void> sendByteFrame(Uint8List matrix) async {
+    _connection?.output.add(matrix); // Sending data
+  }
 }
 
 enum BluetoothConnectionStatus {
