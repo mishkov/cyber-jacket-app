@@ -92,19 +92,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
         ),
-        actions: [
-          BlocBuilder<BluetoothConnectionCubit, BluetoothConnectionState>(
-              builder: (context, state) {
-            return IconButton(
-              onPressed: state.status == BluetoothConnectionStatus.connected
-                  ? () {
-                      Navigator.pushNamed(context, ChatScreen.route);
-                    }
-                  : null,
-              icon: const Icon(Icons.send),
-            );
-          }),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(8),
@@ -147,6 +134,19 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                   const Spacer(),
+                  Column(
+                    children: [
+                      ElevatedButton(
+                        onPressed: state.status ==
+                                BluetoothConnectionStatus.connected
+                            ? () {
+                                Navigator.pushNamed(context, ChatScreen.route);
+                              }
+                            : null,
+                        child: const Text('Draw'),
+                      ),
+                    ],
+                  ),
                 ],
               );
             },
