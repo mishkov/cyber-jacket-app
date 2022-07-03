@@ -1,15 +1,26 @@
-import 'dart:convert';
-import 'dart:developer';
-import 'dart:typed_data';
-
-import 'package:cyber_jacket/chat_screen.dart';
+import 'package:cyber_jacket/database.dart' as localdb;
+import 'package:cyber_jacket/draw_mode_screen.dart';
 import 'package:cyber_jacket/connection_provider.dart';
+import 'package:cyber_jacket/templates_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'sliver_list_with_contoller_layout.dart';
+
+Future<void> main() async {
+  // Avoid errors caused by flutter upgrade.
+  // Importing 'package:flutter/widgets.dart' is required.
+  WidgetsFlutterBinding.ensureInitialized();
+  localdb.Database.instance.init();
+  runApp(
+    BlocProvider(
+      create: (context) => BluetoothConnectionCubit(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -23,18 +34,13 @@ class MyApp extends StatelessWidget {
       onGenerateRoute: (routeSettings) {
         return MaterialPageRoute(
           builder: (context) {
-            return BlocProvider(
-              create: (context) => BluetoothConnectionCubit(),
-              child: Builder(
-                builder: (context) {
-                  if (routeSettings.name == ChatScreen.route) {
-                    return const ChatScreen();
-                  } else {
-                    return const MyHomePage();
-                  }
-                },
-              ),
-            );
+            if (routeSettings.name == DrawModeScreen.route) {
+              return const DrawModeScreen();
+            } else if (routeSettings.name == TemplatesScreen.route) {
+              return const TemplatesScreen();
+            } else {
+              return const MyHomePage();
+            }
           },
         );
       },
@@ -51,154 +57,242 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final _bluetooth = FlutterBluetoothSerial.instance;
-  final _devices = <BluetoothDevice>[];
-  final _controller = ScrollController();
-  Stream<BluetoothState>? _bluetoothStateStream;
-
-  @override
-  void initState() {
-    super.initState();
-    _bluetoothStateStream = _bluetooth.onStateChanged();
-  }
-
-  Future<void> _connectToDevice(String address) async {
-    try {
-      BluetoothConnection connection =
-          await BluetoothConnection.toAddress(address);
-      setState(() {
-        print('Connected to the device');
-      });
-
-      connection.input?.listen((Uint8List data) {
-        print('Data incoming: ${ascii.decode(data)}');
-        connection.output.add(data); // Sending data
-
-        if (ascii.decode(data).contains('!')) {
-          connection.finish();
-          setState(() {}); // Closing connection
-          print('Disconnecting by local host');
-        }
-      }).onDone(() {
-        setState(() {});
-        print('Disconnected by remote request');
-      });
-    } catch (exception) {
-      setState(() {});
-      print('Cannot connect, exception occured');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    const statusTextStyle = TextStyle(
-      color: Colors.white,
-    );
+    final connectionProvider = context.read<BluetoothConnectionCubit>();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cyber Jacket'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(30.0),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                StreamBuilder<BluetoothState>(
-                  stream: _bluetoothStateStream,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return Text(
-                        snapshot.data!.stringValue,
-                        style: statusTextStyle,
-                      );
-                    } else {
-                      return const Text(
-                        'Unknown bluetooth state',
-                        style: statusTextStyle,
-                      );
-                    }
-                  },
-                ),
-              ],
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: BlocBuilder<BluetoothConnectionCubit,
+                  BluetoothConnectionState>(
+                builder: (context, state) {
+                  String message;
+                  if (state.status == BluetoothConnectionStatus.unknown) {
+                    message = 'Unknown connection state';
+                  } else if (state.status ==
+                      BluetoothConnectionStatus.connected) {
+                    message =
+                        'Connected to ${state.connectedDevice!.name ?? state.connectedDevice!.address}';
+                  } else if (state.status == BluetoothConnectionStatus.done) {
+                    message = 'Connection is done';
+                  } else if (state.status ==
+                      BluetoothConnectionStatus.finished) {
+                    message = 'Connection is finished';
+                  } else if (state.status == BluetoothConnectionStatus.error) {
+                    message = 'Error occured';
+                  } else {
+                    message = 'Undefined connection state';
+                  }
+
+                  return Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, ChatScreen.route);
-            },
-            icon: const Icon(Icons.send),
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(8),
         child: Align(
           alignment: Alignment.topCenter,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              ElevatedButton(
-                onPressed: () async {
-                  setState(() {
-                    _devices.clear();
-                  });
-                  if (!(await _bluetooth.isEnabled ?? false)) {
-                    await _bluetooth.requestEnable();
-                  }
-                  final scaning = _bluetooth.startDiscovery();
-                  scaning.listen((event) {
-                    setState(() {
-                      _devices.add(event.device);
-                      if (_controller.hasClients) {
-                        // TODO: Check behavior of this code
-                        _controller
-                            .jumpTo(_controller.position.maxScrollExtent);
-                      }
-                    });
-                  }, onError: (error, stackTrace) {
-                    log('$error -> $stackTrace');
-                  }, onDone: () {
-                    log('scanning stream is done');
-                  });
-                },
-                child: const Text('Scan'),
+          child:
+              BlocBuilder<BluetoothConnectionCubit, BluetoothConnectionState>(
+            builder: (context, state) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: state.connectedDevice != null
+                            ? connectionProvider.disconnect
+                            : null,
+                        child: const Text('Disconnect'),
+                      ),
+                      const SizedBox(
+                        width: 8,
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          connectionProvider.scan();
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return Dialog(
+                                child: ScanningDialog(),
+                              );
+                            },
+                          );
+                          connectionProvider.stopScan();
+                        },
+                        child: const Text('Scan'),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Column(
+                    children: [
+                      ElevatedButton(
+                        onPressed:
+                            state.status == BluetoothConnectionStatus.connected
+                                ? () {
+                                    Navigator.pushNamed(
+                                        context, TemplatesScreen.route);
+                                  }
+                                : null,
+                        child: const Text('Templates'),
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed:
+                            state.status == BluetoothConnectionStatus.connected
+                                ? () {
+                                    Navigator.pushNamed(
+                                        context, DrawModeScreen.route);
+                                  }
+                                : null,
+                        child: const Text('Draw'),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ScanningDialog extends StatelessWidget {
+  ScanningDialog({
+    Key? key,
+  }) : super(key: key);
+
+  final availableDevicesListScrollController = ScrollController();
+  final updateLayoutController = UpdateLayoutController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BlocBuilder<BluetoothConnectionCubit, BluetoothConnectionState>(
+            builder: (context, state) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  state.isScanning ? 'Scanning...' : 'Found Devices',
+                  style: const TextStyle(
+                    fontSize: 24,
+                  ),
+                ),
               ),
-              Expanded(
-                child: _devices.isNotEmpty
-                    ? ListView.builder(
-                        controller: _controller,
-                        shrinkWrap: true,
-                        itemCount: _devices.length,
-                        itemBuilder: (context, index) {
-                          final device = _devices[index];
-                          return Card(
-                            child: ListTile(
-                              title: Text(device.name ?? device.address),
-                              subtitle: Text(
-                                  device.name != null ? device.address : ''),
-                              trailing: TextButton(
-                                onPressed: device.isConnected
-                                    ? null
-                                    : () async {
-                                        _connectToDevice(device.address);
+              state.devices.isNotEmpty
+                  ? BlocListener<BluetoothConnectionCubit,
+                      BluetoothConnectionState>(
+                      listenWhen: (previous, current) {
+                        return previous.devices.length !=
+                            current.devices.length;
+                      },
+                      listener: (context, state) {
+                        if (availableDevicesListScrollController.hasClients) {
+                          updateLayoutController.layoutUpdater?.call();
+                          availableDevicesListScrollController.animateTo(
+                            availableDevicesListScrollController
+                                .position.maxScrollExtent,
+                            duration: const Duration(seconds: 1),
+                            curve: Curves.ease,
+                          );
+                        }
+                      },
+                      child: BlocBuilder<BluetoothConnectionCubit,
+                          BluetoothConnectionState>(
+                        builder: (context, state) {
+                          return CustomScrollView(
+                            controller: availableDevicesListScrollController,
+                            shrinkWrap: true,
+                            slivers: [
+                              SliverListWithControlledLayout(
+                                updateLayoutController: updateLayoutController,
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    final device = state.devices[index];
+                                    return AvailableDevice(
+                                      device: device,
+                                      onConnect: () {
+                                        final connectionProvider = context
+                                            .read<BluetoothConnectionCubit>();
+                                        connectionProvider.connectTo(device);
                                       },
-                                child: Text(device.isConnected
-                                    ? 'Connected'
-                                    : 'Connect'),
+                                    );
+                                  },
+                                  childCount: state.devices.length,
+                                ),
                               ),
-                            ),
+                            ],
                           );
                         },
-                      )
-                    : const Text('No devices detected'),
-              ),
+                      ),
+                    )
+                  : const Text('No devices detected'),
             ],
+          );
+        }),
+        Align(
+          alignment: Alignment.bottomRight,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('cancel'),
+            ),
           ),
+        )
+      ],
+    );
+  }
+}
+
+class AvailableDevice extends StatelessWidget {
+  const AvailableDevice({
+    Key? key,
+    required this.device,
+    this.onConnect,
+  }) : super(key: key);
+
+  final BluetoothDevice device;
+  final void Function()? onConnect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        title: Text(device.name ?? device.address),
+        subtitle: Text(device.name != null ? device.address : ''),
+        trailing: TextButton(
+          onPressed: device.isConnected ? null : onConnect,
+          child: Text(device.isConnected ? 'Connected' : 'Connect'),
         ),
       ),
     );
