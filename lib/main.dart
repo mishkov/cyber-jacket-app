@@ -47,9 +47,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final _availableDevicesListScrollController = ScrollController();
-  final _updateLayoutController = UpdateLayoutController();
-
   @override
   Widget build(BuildContext context) {
     final connectionProvider = context.read<BluetoothConnectionCubit>();
@@ -114,24 +111,8 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Align(
           alignment: Alignment.topCenter,
           child:
-              BlocListener<BluetoothConnectionCubit, BluetoothConnectionState>(
-            listenWhen: (previous, current) {
-              return previous.devices.length != current.devices.length;
-            },
-            listener: (context, state) {
-              if (_availableDevicesListScrollController.hasClients) {
-                _updateLayoutController.layoutUpdater?.call();
-                _availableDevicesListScrollController.animateTo(
-                  _availableDevicesListScrollController
-                      .position.maxScrollExtent,
-                  duration: const Duration(seconds: 1),
-                  curve: Curves.ease,
-                );
-              }
-            },
-            child:
-                BlocBuilder<BluetoothConnectionCubit, BluetoothConnectionState>(
-                    builder: (context, state) {
+              BlocBuilder<BluetoothConnectionCubit, BluetoothConnectionState>(
+            builder: (context, state) {
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -149,26 +130,95 @@ class _MyHomePageState extends State<MyHomePage> {
                         width: 8,
                       ),
                       ElevatedButton(
-                        onPressed:
-                            !state.isScanning ? connectionProvider.scan : null,
+                        onPressed: () {
+                          connectionProvider.scan();
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return Dialog(
+                                child: ScanningDialog(),
+                              );
+                            },
+                          );
+                          connectionProvider.stopScan();
+                        },
                         child: const Text('Scan'),
                       ),
                     ],
                   ),
-                  Expanded(
-                    child: state.devices.isNotEmpty
-                        ? CustomScrollView(
-                            controller: _availableDevicesListScrollController,
+                  const Spacer(),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ScanningDialog extends StatelessWidget {
+  ScanningDialog({
+    Key? key,
+  }) : super(key: key);
+
+  final availableDevicesListScrollController = ScrollController();
+  final updateLayoutController = UpdateLayoutController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BlocBuilder<BluetoothConnectionCubit, BluetoothConnectionState>(
+            builder: (context, state) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  state.isScanning ? 'Scanning...' : 'Found Devices',
+                  style: const TextStyle(
+                    fontSize: 24,
+                  ),
+                ),
+              ),
+              state.devices.isNotEmpty
+                  ? BlocListener<BluetoothConnectionCubit,
+                      BluetoothConnectionState>(
+                      listenWhen: (previous, current) {
+                        return previous.devices.length !=
+                            current.devices.length;
+                      },
+                      listener: (context, state) {
+                        if (availableDevicesListScrollController.hasClients) {
+                          updateLayoutController.layoutUpdater?.call();
+                          availableDevicesListScrollController.animateTo(
+                            availableDevicesListScrollController
+                                .position.maxScrollExtent,
+                            duration: const Duration(seconds: 1),
+                            curve: Curves.ease,
+                          );
+                        }
+                      },
+                      child: BlocBuilder<BluetoothConnectionCubit,
+                          BluetoothConnectionState>(
+                        builder: (context, state) {
+                          return CustomScrollView(
+                            controller: availableDevicesListScrollController,
                             shrinkWrap: true,
                             slivers: [
                               SliverListWithControlledLayout(
-                                updateLayoutController: _updateLayoutController,
+                                updateLayoutController: updateLayoutController,
                                 delegate: SliverChildBuilderDelegate(
                                   (context, index) {
                                     final device = state.devices[index];
                                     return AvailableDevice(
                                       device: device,
                                       onConnect: () {
+                                        final connectionProvider = context
+                                            .read<BluetoothConnectionCubit>();
                                         connectionProvider.connectTo(device);
                                       },
                                     );
@@ -177,29 +227,27 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ),
                               ),
                             ],
-                          )
-                        // ListView.builder(
-                        //     controller: _controller,
-                        //     shrinkWrap: true,
-                        //     itemCount: state.devices.length,
-                        //     itemBuilder: (context, index) {
-                        //       final device = state.devices[index];
-                        //       return AvailableDevice(
-                        //         device: device,
-                        //         onConnect: () {
-                        //           connectionProvider.connectTo(device);
-                        //         },
-                        //       );
-                        //     },
-                        //   )
-                        : const Text('No devices detected'),
-                  ),
-                ],
-              );
-            }),
+                          );
+                        },
+                      ),
+                    )
+                  : const Text('No devices detected'),
+            ],
+          );
+        }),
+        Align(
+          alignment: Alignment.bottomRight,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('cancel'),
+            ),
           ),
-        ),
-      ),
+        )
+      ],
     );
   }
 }
@@ -221,7 +269,7 @@ class AvailableDevice extends StatelessWidget {
         title: Text(device.name ?? device.address),
         subtitle: Text(device.name != null ? device.address : ''),
         trailing: TextButton(
-          onPressed: onConnect,
+          onPressed: device.isConnected ? null : onConnect,
           child: Text(device.isConnected ? 'Connected' : 'Connect'),
         ),
       ),
