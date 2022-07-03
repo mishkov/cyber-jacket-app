@@ -1,12 +1,20 @@
+import 'package:cyber_jacket/database.dart' as localdb;
 import 'package:cyber_jacket/draw_mode_screen.dart';
 import 'package:cyber_jacket/connection_provider.dart';
+import 'package:cyber_jacket/templates_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
 
 import 'sliver_list_with_contoller_layout.dart';
 
-void main() {
+Future<void> main() async {
+  // Avoid errors caused by flutter upgrade.
+  // Importing 'package:flutter/widgets.dart' is required.
+  WidgetsFlutterBinding.ensureInitialized();
+  localdb.Database.instance.init();
   runApp(
     BlocProvider(
       create: (context) => BluetoothConnectionCubit(),
@@ -28,6 +36,8 @@ class MyApp extends StatelessWidget {
           builder: (context) {
             if (routeSettings.name == DrawModeScreen.route) {
               return const DrawModeScreen();
+            } else if (routeSettings.name == TemplatesScreen.route) {
+              return const TemplatesScreen();
             } else {
               return const MyHomePage();
             }
@@ -136,6 +146,17 @@ class _MyHomePageState extends State<MyHomePage> {
                   const Spacer(),
                   Column(
                     children: [
+                      ElevatedButton(
+                        onPressed:
+                            state.status == BluetoothConnectionStatus.connected
+                                ? () {
+                                    Navigator.pushNamed(
+                                        context, TemplatesScreen.route);
+                                  }
+                                : null,
+                        child: const Text('Templates'),
+                      ),
+                      const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed:
                             state.status == BluetoothConnectionStatus.connected
