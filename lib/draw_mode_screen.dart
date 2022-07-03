@@ -1,3 +1,7 @@
+import 'dart:typed_data';
+
+import 'package:cyber_jacket/database.dart';
+import 'package:cyber_jacket/template.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -79,6 +83,78 @@ class _DrawModeScreenState extends State<DrawModeScreen> {
                       },
                       icon: const Icon(Icons.rectangle_rounded),
                       label: const Text('Fill'),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              final nameController = TextEditingController();
+                              return Dialog(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text(
+                                        'Save To Templates',
+                                        style: TextStyle(
+                                          fontSize: 24,
+                                        ),
+                                      ),
+                                      TextFormField(
+                                        controller: nameController,
+                                      ),
+                                      const SizedBox(height: 50),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                            child: const Text('Cancel'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () async {
+                                              final bytes = List<int>.generate(
+                                                  8, (index) {
+                                                final row = matrix[index];
+                                                var rowByte = 0;
+                                                for (int i = 0; i < 8; i++) {
+                                                  if (row[i] == true) {
+                                                    final bitsToShift = 7 - i;
+                                                    final currentBit =
+                                                        1 << bitsToShift;
+                                                    final newRow =
+                                                        rowByte | currentBit;
+                                                    rowByte = newRow;
+                                                  }
+                                                }
+                                                return rowByte;
+                                              });
+                                              final template = Template(
+                                                nameController.text,
+                                                Uint8List.fromList(bytes),
+                                              );
+
+                                              await Database.instance
+                                                  .insertTemplate(template);
+                                              Navigator.pop(context);
+                                            },
+                                            child: const Text('Save'),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            });
+                      },
+                      icon: const Icon(Icons.save),
+                      label: const Text('Save...'),
                     ),
                   ],
                 ),
