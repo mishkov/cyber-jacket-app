@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 
+import 'sliver_list_with_contoller_layout.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -47,7 +49,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final _controller = ScrollController();
+  final _availableDevicesListScrollController = ScrollController();
+  final _updateLayoutController = UpdateLayoutController();
 
   @override
   Widget build(BuildContext context) {
@@ -113,10 +116,14 @@ class _MyHomePageState extends State<MyHomePage> {
               return previous.devices.length != current.devices.length;
             },
             listener: (context, state) {
-              if (_controller.hasClients) {
-                setState(() {
-                  _controller.jumpTo(_controller.position.maxScrollExtent);
-                });
+              if (_availableDevicesListScrollController.hasClients) {
+                _updateLayoutController.layoutUpdater?.call();
+                _availableDevicesListScrollController.animateTo(
+                  _availableDevicesListScrollController
+                      .position.maxScrollExtent,
+                  duration: const Duration(seconds: 1),
+                  curve: Curves.ease,
+                );
               }
             },
             child:
@@ -147,20 +154,41 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   Expanded(
                     child: state.devices.isNotEmpty
-                        ? ListView.builder(
-                            controller: _controller,
+                        ? CustomScrollView(
+                            controller: _availableDevicesListScrollController,
                             shrinkWrap: true,
-                            itemCount: state.devices.length,
-                            itemBuilder: (context, index) {
-                              final device = state.devices[index];
-                              return AvailableDevice(
-                                device: device,
-                                onConnect: () {
-                                  connectionProvider.connectTo(device);
-                                },
-                              );
-                            },
+                            slivers: [
+                              SliverListWithControlledLayout(
+                                updateLayoutController: _updateLayoutController,
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    final device = state.devices[index];
+                                    return AvailableDevice(
+                                      device: device,
+                                      onConnect: () {
+                                        connectionProvider.connectTo(device);
+                                      },
+                                    );
+                                  },
+                                  childCount: state.devices.length,
+                                ),
+                              ),
+                            ],
                           )
+                        // ListView.builder(
+                        //     controller: _controller,
+                        //     shrinkWrap: true,
+                        //     itemCount: state.devices.length,
+                        //     itemBuilder: (context, index) {
+                        //       final device = state.devices[index];
+                        //       return AvailableDevice(
+                        //         device: device,
+                        //         onConnect: () {
+                        //           connectionProvider.connectTo(device);
+                        //         },
+                        //       );
+                        //     },
+                        //   )
                         : const Text('No devices detected'),
                   ),
                 ],
