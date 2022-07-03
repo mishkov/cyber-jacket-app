@@ -1,4 +1,4 @@
-import 'package:cyber_jacket/chat_screen.dart';
+import 'package:cyber_jacket/draw_mode_screen.dart';
 import 'package:cyber_jacket/connection_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,8 +26,8 @@ class MyApp extends StatelessWidget {
       onGenerateRoute: (routeSettings) {
         return MaterialPageRoute(
           builder: (context) {
-            if (routeSettings.name == ChatScreen.route) {
-              return const ChatScreen();
+            if (routeSettings.name == DrawModeScreen.route) {
+              return const DrawModeScreen();
             } else {
               return const MyHomePage();
             }
@@ -137,12 +137,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   Column(
                     children: [
                       ElevatedButton(
-                        onPressed: state.status ==
-                                BluetoothConnectionStatus.connected
-                            ? () {
-                                Navigator.pushNamed(context, ChatScreen.route);
-                              }
-                            : null,
+                        onPressed:
+                            state.status == BluetoothConnectionStatus.connected
+                                ? () {
+                                    Navigator.pushNamed(
+                                        context, DrawModeScreen.route);
+                                  }
+                                : null,
                         child: const Text('Draw'),
                       ),
                     ],

@@ -111,6 +111,10 @@ class BluetoothConnectionCubit extends Cubit<BluetoothConnectionState> {
     });
   }
 
+  Future<void> stopScan() async {
+    await _bluetooth.cancelDiscovery();
+  }
+
   Future<void> sendTestMessage() async {
     const heart = '''
         01100110

@@ -3,15 +3,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'connection_provider.dart';
 
-class ChatScreen extends StatefulWidget {
-  static const route = '/chat';
-  const ChatScreen({Key? key}) : super(key: key);
+class DrawModeScreen extends StatefulWidget {
+  static const route = '/draw';
+  const DrawModeScreen({Key? key}) : super(key: key);
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  State<DrawModeScreen> createState() => _DrawModeScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _DrawModeScreenState extends State<DrawModeScreen> {
   List<List<bool>> matrix =
       List.generate(8, (_) => List.generate(8, (_) => false));
   MatrixDrawMode _matrixDrawMode = MatrixDrawMode.draw;
@@ -20,7 +20,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chat'),
+        title: const Text('Draw'),
       ),
       body: Align(
         alignment: Alignment.topCenter,
