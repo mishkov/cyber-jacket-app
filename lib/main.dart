@@ -98,12 +98,17 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, ChatScreen.route);
-            },
-            icon: const Icon(Icons.send),
-          ),
+          BlocBuilder<BluetoothConnectionCubit, BluetoothConnectionState>(
+              builder: (context, state) {
+            return IconButton(
+              onPressed: state.status == BluetoothConnectionStatus.connected
+                  ? () {
+                      Navigator.pushNamed(context, ChatScreen.route);
+                    }
+                  : null,
+              icon: const Icon(Icons.send),
+            );
+          }),
         ],
       ),
       body: Padding(
