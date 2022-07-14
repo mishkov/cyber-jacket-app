@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:cyber_jacket/database.dart';
 import 'package:cyber_jacket/template.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -156,6 +157,34 @@ class _DrawModeScreenState extends State<DrawModeScreen> {
                       icon: const Icon(Icons.save),
                       label: const Text('Save...'),
                     ),
+                    kDebugMode
+                        ? ElevatedButton.icon(
+                            onPressed: () {
+                              final charBinary = List<int>.generate(8, (index) {
+                                int columntByte = 0;
+                                for (int i = 0; i < 8; i++) {
+                                  if (matrix[i][index] == true) {
+                                    final bitsToShift = 7 - i;
+                                    final currentBit = 1 << bitsToShift;
+                                    final newColumn = columntByte | currentBit;
+                                    columntByte = newColumn;
+                                  }
+                                }
+                                return columntByte;
+                              });
+                              for (int i = 0; i < charBinary.length;) {
+                                if (charBinary[i] == 0) {
+                                  charBinary.removeAt(i);
+                                } else {
+                                  i++;
+                                }
+                              }
+                              print('$charBinary,');
+                            },
+                            icon: const Icon(Icons.arrow_circle_right_outlined),
+                            label: const Text('Convert to byte columns'),
+                          )
+                        : const SizedBox.shrink(),
                   ],
                 ),
               ],

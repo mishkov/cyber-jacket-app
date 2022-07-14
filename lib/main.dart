@@ -1,12 +1,12 @@
 import 'package:cyber_jacket/database.dart' as localdb;
 import 'package:cyber_jacket/draw_mode_screen.dart';
 import 'package:cyber_jacket/connection_provider.dart';
+import 'package:cyber_jacket/running_text_mode_screen.dart';
 import 'package:cyber_jacket/templates_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
 
 import 'sliver_list_with_contoller_layout.dart';
 
@@ -28,6 +28,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     return MaterialApp(
       title: 'Cyber Jacket',
       initialRoute: MyHomePage.route,
@@ -38,6 +42,8 @@ class MyApp extends StatelessWidget {
               return const DrawModeScreen();
             } else if (routeSettings.name == TemplatesScreen.route) {
               return const TemplatesScreen();
+            } else if (routeSettings.name == RunningTextModeScreen.route) {
+              return const RunningTextModeScreen();
             } else {
               return const MyHomePage();
             }
@@ -146,6 +152,17 @@ class _MyHomePageState extends State<MyHomePage> {
                   const Spacer(),
                   Column(
                     children: [
+                      ElevatedButton(
+                        onPressed:
+                            state.status == BluetoothConnectionStatus.connected
+                                ? () {
+                                    Navigator.pushNamed(
+                                        context, RunningTextModeScreen.route);
+                                  }
+                                : null,
+                        child: const Text('Running Text'),
+                      ),
+                      const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed:
                             state.status == BluetoothConnectionStatus.connected
