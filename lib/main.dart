@@ -4,6 +4,7 @@ import 'package:cyber_jacket/connection_provider.dart';
 import 'package:cyber_jacket/running_text_mode_screen.dart';
 import 'package:cyber_jacket/templates_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 
@@ -27,6 +28,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     return MaterialApp(
       title: 'Cyber Jacket',
       initialRoute: MyHomePage.route,
