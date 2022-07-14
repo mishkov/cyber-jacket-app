@@ -1,6 +1,7 @@
 import 'package:cyber_jacket/database.dart' as localdb;
 import 'package:cyber_jacket/draw_mode_screen.dart';
 import 'package:cyber_jacket/connection_provider.dart';
+import 'package:cyber_jacket/pulse_mode_screen.dart';
 import 'package:cyber_jacket/running_text_mode_screen.dart';
 import 'package:cyber_jacket/templates_screen.dart';
 import 'package:flutter/material.dart';
@@ -44,6 +45,8 @@ class MyApp extends StatelessWidget {
               return const TemplatesScreen();
             } else if (routeSettings.name == RunningTextModeScreen.route) {
               return const RunningTextModeScreen();
+            } else if (routeSettings.name == PulseModeScreen.route) {
+              return const PulseModeScreen();
             } else {
               return const MyHomePage();
             }
@@ -172,6 +175,17 @@ class _MyHomePageState extends State<MyHomePage> {
                                   }
                                 : null,
                         child: const Text('Templates'),
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed:
+                            state.status == BluetoothConnectionStatus.connected
+                                ? () {
+                                    Navigator.pushNamed(
+                                        context, PulseModeScreen.route);
+                                  }
+                                : null,
+                        child: const Text('Pulse'),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
