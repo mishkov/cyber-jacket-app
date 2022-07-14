@@ -12,8 +12,6 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'sliver_list_with_contoller_layout.dart';
 
 Future<void> main() async {
-  // Avoid errors caused by flutter upgrade.
-  // Importing 'package:flutter/widgets.dart' is required.
   WidgetsFlutterBinding.ensureInitialized();
   localdb.Database.instance.init();
   runApp(
