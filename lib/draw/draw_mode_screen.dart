@@ -1,12 +1,12 @@
 import 'dart:typed_data';
 
-import 'package:cyber_jacket/database.dart';
-import 'package:cyber_jacket/template.dart';
+import 'package:cyber_jacket/templates/database.dart';
+import 'package:cyber_jacket/templates/template.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'connection_provider.dart';
+import '../connection_provider.dart';
 
 class DrawModeScreen extends StatefulWidget {
   static const route = '/draw';

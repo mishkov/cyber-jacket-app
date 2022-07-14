@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:cyber_jacket/chars.dart';
+import 'package:cyber_jacket/running_text/chars.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'connection_provider.dart';
+import '../connection_provider.dart';
 
 class RunningTextModeScreen extends StatefulWidget {
   static const route = '/running-text';

@@ -1,9 +1,9 @@
-import 'package:cyber_jacket/database.dart' as localdb;
-import 'package:cyber_jacket/draw_mode_screen.dart';
+import 'package:cyber_jacket/templates/database.dart' as localdb;
+import 'package:cyber_jacket/draw/draw_mode_screen.dart';
 import 'package:cyber_jacket/connection_provider.dart';
-import 'package:cyber_jacket/pulse_mode_screen.dart';
-import 'package:cyber_jacket/running_text_mode_screen.dart';
-import 'package:cyber_jacket/templates_screen.dart';
+import 'package:cyber_jacket/pulse/pulse_mode_screen.dart';
+import 'package:cyber_jacket/running_text/running_text_mode_screen.dart';
+import 'package:cyber_jacket/templates/templates_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

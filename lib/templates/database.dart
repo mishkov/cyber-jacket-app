@@ -1,4 +1,4 @@
-import 'package:cyber_jacket/template.dart';
+import 'package:cyber_jacket/templates/template.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:path/path.dart';
 

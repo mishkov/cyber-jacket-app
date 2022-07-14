@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'chars.dart';
-import 'connection_provider.dart';
+import '../running_text/chars.dart';
+import '../connection_provider.dart';
 
 class PulseModeScreen extends StatefulWidget {
   static const route = '/pulse';

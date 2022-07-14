@@ -1,4 +1,4 @@
-import 'package:cyber_jacket/chars.dart';
+import 'package:cyber_jacket/running_text/chars.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
