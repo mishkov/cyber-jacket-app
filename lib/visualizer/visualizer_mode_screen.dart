@@ -9,6 +9,7 @@ import '../connection_provider.dart';
 import 'config_screen.dart';
 import 'visualizer.dart';
 import 'visualizer_configuration.dart';
+import 'visualzier_view.dart';
 
 class VisualizerModeScreen extends StatefulWidget {
   static const route = '/visualizer';
@@ -21,63 +22,61 @@ class VisualizerModeScreen extends StatefulWidget {
 
 class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
   final _visualizer = Visualizer();
-  Timer? _frameUpdater;
+  MatrixVisualizer? _matrixVisualizer;
 
   Float64List _data = Float64List(0);
-  final _lastData = List<num>.filled(8, 0.0);
-
-  Uint8List _lastFrame = Uint8List(8);
   VisualizerConfiguration? _currentConfig;
 
   @override
   void initState() {
     super.initState();
+
     _visualizer.getConfig().then((config) {
       _currentConfig = config;
     });
 
-    final connectionProvider = context.read<BluetoothConnectionCubit>();
+    final bluetooth = context.read<BluetoothConnectionCubit>();
+    _matrixVisualizer = MatrixVisualizer(bluetooth: bluetooth);
 
-    _frameUpdater = Timer.periodic(
-      const Duration(milliseconds: 70),
-      (_) {
-        connectionProvider.sendByteFrame(_lastFrame);
-      },
-    );
     intFrequencyListener();
   }
 
-  @override
-  void dispose() {
-    _frameUpdater?.cancel();
-    super.dispose();
+  void intFrequencyListener() {
+    _visualizer.addListener((data) {
+      if (data == null) return;
+      if (!mounted) return;
+
+      setState(() {
+        _data = data;
+        _matrixVisualizer?.addColumns(_data);
+      });
+    }, showRecordPermissionDeniedMessage);
   }
 
-  void intFrequencyListener() {
-    _visualizer.addListener(
-      (data) {
-        if (data == null) return;
-        if (!mounted) return;
+  void showRecordPermissionDeniedMessage() {
+    final messenger = ScaffoldMessenger.of(context);
 
-        setState(() {
-          _data = data;
-        });
-      },
-      () {},
+    const message = SnackBar(
+      content: Text('Permission Denied. Cannot record audio.'),
     );
+    messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(message);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pulse'),
+        title: const Text('Visualizer'),
         actions: [
           IconButton(
             onPressed: () async {
               final config = await Navigator.pushNamed<VisualizerConfiguration>(
-                  context, ConfigScreen.route,
-                  arguments: _currentConfig);
+                context,
+                ConfigScreen.route,
+                arguments: _currentConfig,
+              );
+
               if (config != null) {
                 _currentConfig = config;
                 _visualizer.setConfig(config);
@@ -92,14 +91,9 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
         child: SizedBox(
           width: double.infinity,
           height: double.infinity,
-          child: CustomPaint(
-            painter: DataPainter(
-              _data,
-              _lastData,
-              (frame) {
-                _lastFrame = frame;
-              },
-            ),
+          child: VisualizerView(
+            columns: _data,
+            maxHeight: Visualizer.maxColumnHeight,
           ),
         ),
       ),
@@ -107,69 +101,61 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
   }
 }
 
-class DataPainter extends CustomPainter {
-  List<num> data;
-  List<num> lastData;
+class MatrixVisualizer {
+  static const _columnsCount = 8;
 
-  void Function(Uint8List frame) onFrame;
+  Timer? _frameUpdater;
 
-  DataPainter(
-    this.data,
-    this.lastData,
-    this.onFrame,
-  );
+  final List<num> _oldColumns = List.filled(_columnsCount, 0);
+  List<num> _columns = List.filled(_columnsCount, 0);
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.isEmpty) return;
+  BluetoothConnectionCubit bluetooth;
 
-    _drawData(data, size, canvas);
+  MatrixVisualizer({required this.bluetooth}) {
+    _frameUpdater =
+        Timer.periodic(const Duration(milliseconds: 70), _updateFrame);
   }
 
-  void _drawData(Iterable<num> data, Size size, Canvas canvas) {
-    final columnWidth = size.width / data.length;
-    final maxColumnHeight = size.height;
+  void stop() {
+    _frameUpdater?.cancel();
+  }
 
-    const maxValue = 8;
-
-    for (int i = 0; i < data.length; i++) {
-      num value;
-      if (data.elementAt(i) > lastData.elementAt(i)) {
-        value = data.elementAt(i);
-      } else {
-        value = math.max(lastData.elementAt(i) - 0.2, 0);
-      }
-
-      lastData[i] = value.toDouble();
-
-      // draw on screen
-      final columnHeigt = (value / maxValue) * maxColumnHeight;
-
-      final columnPaint = Paint()..color = Colors.blue;
-
-      final left = i * columnWidth;
-      final top = maxColumnHeight - columnHeigt;
-      final column = Rect.fromLTWH(left, top, columnWidth, columnHeigt);
-
-      canvas.drawRect(column, columnPaint);
+  void addColumns(List<num> columns) {
+    if (columns.length != _columnsCount) {
+      throw Exception('Incorrect columns length');
     }
 
-    Uint8List frame = Uint8List(8);
+    _columns = columns;
+  }
 
-    for (int i = 0; i < frame.length; i++) {
-      int row = 0;
+  void _updateFrame(Timer timer) {
+    for (var i = 0; i < _columns.length; i++) {
+      num value;
+      if (_columns[i] > _oldColumns[i]) {
+        value = _columns[i];
+      } else {
+        const maxValue = Visualizer.maxColumnHeight;
+        const downStep = maxValue / 40;
 
-      for (int j = 0; j < lastData.length; j++) {
-        if (lastData[j].round() >= (8 - i)) {
-          row |= 1 << (7 - j);
+        value = math.max(_oldColumns[i] - downStep, 0);
+      }
+
+      _oldColumns[i] = value.toDouble();
+    }
+
+    final frame = Uint8List(_columnsCount);
+
+    for (var i = 0; i < frame.length; i++) {
+      var row = 0;
+
+      for (var j = 0; j < _oldColumns.length; j++) {
+        if (_oldColumns[j].round() >= (_columnsCount - i)) {
+          row |= 1 << ((_columnsCount - 1) - j);
         }
       }
       frame[i] = row;
     }
 
-    onFrame(frame);
+    bluetooth.sendByteFrame(frame);
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
