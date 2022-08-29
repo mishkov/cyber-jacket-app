@@ -21,17 +21,17 @@ class VisualizerModeScreen extends StatefulWidget {
 }
 
 class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
-  final _visualizer = SpectrumSink();
+  final _spectrumSink = SpectrumSink();
   MatrixVisualizer? _matrixVisualizer;
 
-  Float64List _data = Float64List(8);
+  Float64List _spectrum = Float64List(8);
   VisualizerConfiguration? _currentConfig;
 
   @override
   void initState() {
     super.initState();
 
-    _visualizer.getConfig().then((config) {
+    _spectrumSink.getConfig().then((config) {
       _currentConfig = config;
     });
 
@@ -48,13 +48,13 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
   }
 
   void initColumnsListener() {
-    _visualizer.addListener((data) {
-      if (data == null) return;
+    _spectrumSink.addListener((spectrum) {
+      if (spectrum == null) return;
       if (!mounted) return;
 
       setState(() {
-        _data = data;
-        _matrixVisualizer?.addColumns(_data);
+        _spectrum = spectrum;
+        _matrixVisualizer?.addColumns(_spectrum);
       });
     }, showRecordPermissionDeniedMessage);
   }
@@ -85,7 +85,7 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
 
               if (config != null) {
                 _currentConfig = config;
-                _visualizer.setConfig(config);
+                _spectrumSink.setConfig(config);
               }
             },
             icon: const Icon(Icons.settings),
@@ -98,7 +98,7 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
           width: double.infinity,
           height: double.infinity,
           child: VisualizerView(
-            columns: _data,
+            columns: _spectrum,
             maxHeight: SpectrumSink.maxColumnHeight,
           ),
         ),
