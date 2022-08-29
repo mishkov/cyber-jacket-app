@@ -141,7 +141,7 @@ class MatrixVisualizer {
         value = _columns[i];
       } else {
         const maxValue = SpectrumSink.maxColumnHeight;
-        const downStep = maxValue / 40;
+        const downStep = maxValue / 13;
 
         value = math.max(_oldColumns[i] - downStep, 0);
       }
