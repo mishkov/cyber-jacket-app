@@ -2,6 +2,7 @@ import 'package:cyber_jacket/draw/draw_mode_screen.dart';
 import 'package:cyber_jacket/home_page/connection_dashboard.dart';
 import 'package:cyber_jacket/home_page/status_bar.dart';
 import 'package:cyber_jacket/pulse/pulse_mode_screen.dart';
+import 'package:cyber_jacket/visualizer/visualizer_mode_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -88,6 +89,19 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ? () {
                                     Navigator.pushNamed(
                                       context,
+                                      VisualizerModeScreen.route,
+                                    );
+                                  }
+                                : null,
+                        child: const Text('Visualizer'),
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed:
+                            state.status == BluetoothConnectionStatus.connected
+                                ? () {
+                                    Navigator.pushNamed(
+                                      context,
                                       DrawModeScreen.route,
                                     );
                                   }
@@ -105,5 +119,3 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-
-
