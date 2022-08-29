@@ -7,7 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../connection_provider.dart';
 import 'config_screen.dart';
-import 'spectrometer.dart';
+import 'visualizer.dart';
 
 class VisualizerModeScreen extends StatefulWidget {
   static const route = '/visualizer';
@@ -19,7 +19,7 @@ class VisualizerModeScreen extends StatefulWidget {
 }
 
 class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
-  final _soundFrequencyMeter = Spectrometer();
+  final _soundFrequencyMeter = Visualizer();
   Timer? frameUpdater;
 
   Float64List _data = Float64List(0);
@@ -53,7 +53,7 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
   }
 
   void intFrequencyListener() {
-    _soundFrequencyMeter.addFrequencyListener(
+    _soundFrequencyMeter.addListener(
       (data) {
         if (data == null) return;
         if (!mounted) return;
