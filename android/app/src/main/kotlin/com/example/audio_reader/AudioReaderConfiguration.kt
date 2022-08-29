@@ -12,7 +12,7 @@ class AudioReaderConfiguration(val sampleRate: Int, val readsNumber: Int) {
     }
 
     companion object {
-        const val audioSource = MediaRecorder.AudioSource.DEFAULT
+        const val audioSource = MediaRecorder.AudioSource.VOICE_RECOGNITION
         const val channelConfig = AudioFormat.CHANNEL_IN_MONO
         const val audioFormat = AudioFormat.ENCODING_PCM_8BIT
 
