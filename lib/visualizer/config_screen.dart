@@ -1,7 +1,8 @@
 import 'dart:math' as math;
 
-import 'package:cyber_jacket/visualizer/visualizer_configuration.dart';
 import 'package:flutter/material.dart';
+
+import 'visualizer_configuration.dart';
 
 class ConfigScreen extends StatefulWidget {
   static const route = '/visualizer_config';
