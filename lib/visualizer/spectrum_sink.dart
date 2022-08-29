@@ -11,7 +11,7 @@ import 'visualizer_configuration.dart';
 /// Each columns is in range [0, 8].
 typedef ColumnsListener = void Function(Float64List? columns);
 
-class Visualizer {
+class SpectrumSink {
   static const maxColumnHeight = 8.0;
 
   final _controllerChannel = const MethodChannel('visualizer_controller');

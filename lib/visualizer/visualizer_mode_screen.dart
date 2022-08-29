@@ -7,7 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../connection_provider.dart';
 import 'config_screen.dart';
-import 'visualizer.dart';
+import 'spectrum_sink.dart';
 import 'visualizer_configuration.dart';
 import 'visualzier_view.dart';
 
@@ -21,7 +21,7 @@ class VisualizerModeScreen extends StatefulWidget {
 }
 
 class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
-  final _visualizer = Visualizer();
+  final _visualizer = SpectrumSink();
   MatrixVisualizer? _matrixVisualizer;
 
   Float64List _data = Float64List(8);
@@ -99,7 +99,7 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
           height: double.infinity,
           child: VisualizerView(
             columns: _data,
-            maxHeight: Visualizer.maxColumnHeight,
+            maxHeight: SpectrumSink.maxColumnHeight,
           ),
         ),
       ),
@@ -140,7 +140,7 @@ class MatrixVisualizer {
       if (_columns[i] > _oldColumns[i]) {
         value = _columns[i];
       } else {
-        const maxValue = Visualizer.maxColumnHeight;
+        const maxValue = SpectrumSink.maxColumnHeight;
         const downStep = maxValue / 40;
 
         value = math.max(_oldColumns[i] - downStep, 0);
