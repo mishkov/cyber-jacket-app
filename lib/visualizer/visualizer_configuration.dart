@@ -16,8 +16,8 @@ class VisualizerConfiguration {
 
   factory VisualizerConfiguration.fromMap(Map<String, dynamic> map) {
     return VisualizerConfiguration(
-      amplitudeThreshold: double.tryParse(map['amplitudeThreshold']) ?? 0.0,
-      amplitudeLimit: double.tryParse(map['amplitudeLimit']) ?? 0.0,
+      amplitudeThreshold: map['amplitudeThreshold'] ?? 0.0,
+      amplitudeLimit: map['amplitudeLimit'] ?? 0.0,
     );
   }
 }
