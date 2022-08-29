@@ -6,4 +6,11 @@ class VisualizerConfiguration {
     required this.amplitudeThreshold,
     required this.amplitudeLimit,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'amplitudeThreshold': amplitudeThreshold,
+      'amplitudeLimit': amplitudeLimit,
+    };
+  }
 }
