@@ -4,6 +4,7 @@ import 'package:cyber_jacket/connection_provider.dart';
 import 'package:cyber_jacket/pulse/pulse_mode_screen.dart';
 import 'package:cyber_jacket/running_text/running_text_mode_screen.dart';
 import 'package:cyber_jacket/templates/templates_screen.dart';
+import 'package:cyber_jacket/visualizer/visualizer_mode_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -44,6 +45,8 @@ class MyApp extends StatelessWidget {
               return const RunningTextModeScreen();
             } else if (routeSettings.name == PulseModeScreen.route) {
               return const PulseModeScreen();
+            } else if (routeSettings.name == VisualizerModeScreen.route) {
+              return const VisualizerModeScreen();
             } else {
               return const MyHomePage();
             }
