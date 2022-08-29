@@ -4,12 +4,14 @@ import 'package:cyber_jacket/connection_provider.dart';
 import 'package:cyber_jacket/pulse/pulse_mode_screen.dart';
 import 'package:cyber_jacket/running_text/running_text_mode_screen.dart';
 import 'package:cyber_jacket/templates/templates_screen.dart';
+import 'package:cyber_jacket/visualizer/visualizer_configuration.dart';
 import 'package:cyber_jacket/visualizer/visualizer_mode_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'home_page/home_page.dart';
+import 'visualizer/config_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +37,13 @@ class MyApp extends StatelessWidget {
       title: 'Cyber Jacket',
       initialRoute: MyHomePage.route,
       onGenerateRoute: (routeSettings) {
+        if (routeSettings.name == ConfigScreen.route) {
+          return MaterialPageRoute<VisualizerConfiguration>(builder: (context) {
+            return ConfigScreen(
+              configuration: routeSettings.arguments as VisualizerConfiguration,
+            );
+          });
+        }
         return MaterialPageRoute(
           builder: (context) {
             if (routeSettings.name == DrawModeScreen.route) {
