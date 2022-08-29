@@ -1,9 +1,10 @@
 import 'dart:typed_data';
 
-import 'package:cyber_jacket/visualizer/visualizer_configuration.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+import 'visualizer_configuration.dart';
 
 /// Receives 8 columns of frequency range.
 ///
