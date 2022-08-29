@@ -1,13 +1,14 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:math' as math;
-import 'package:cyber_jacket/visualizer/visualizer_configuration.dart';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../connection_provider.dart';
 import 'config_screen.dart';
 import 'visualizer.dart';
+import 'visualizer_configuration.dart';
 
 class VisualizerModeScreen extends StatefulWidget {
   static const route = '/visualizer';
@@ -19,8 +20,8 @@ class VisualizerModeScreen extends StatefulWidget {
 }
 
 class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
-  final _soundFrequencyMeter = Visualizer();
-  Timer? frameUpdater;
+  final _visualizer = Visualizer();
+  Timer? _frameUpdater;
 
   Float64List _data = Float64List(0);
   final _lastData = List<num>.filled(8, 0.0);
@@ -31,13 +32,13 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
   @override
   void initState() {
     super.initState();
-    _soundFrequencyMeter.getConfig().then((config) {
+    _visualizer.getConfig().then((config) {
       _currentConfig = config;
     });
 
     final connectionProvider = context.read<BluetoothConnectionCubit>();
 
-    frameUpdater = Timer.periodic(
+    _frameUpdater = Timer.periodic(
       const Duration(milliseconds: 70),
       (_) {
         connectionProvider.sendByteFrame(_lastFrame);
@@ -48,12 +49,12 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
 
   @override
   void dispose() {
-    frameUpdater?.cancel();
+    _frameUpdater?.cancel();
     super.dispose();
   }
 
   void intFrequencyListener() {
-    _soundFrequencyMeter.addListener(
+    _visualizer.addListener(
       (data) {
         if (data == null) return;
         if (!mounted) return;
@@ -79,7 +80,7 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
                   arguments: _currentConfig);
               if (config != null) {
                 _currentConfig = config;
-                _soundFrequencyMeter.setConfig(config);
+                _visualizer.setConfig(config);
               }
             },
             icon: const Icon(Icons.settings),
