@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:math' as math;
+import 'package:cyber_jacket/visualizer/visualizer_configuration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../connection_provider.dart';
+import 'config_screen.dart';
 import 'spectrometer.dart';
 
 class VisualizerModeScreen extends StatefulWidget {
@@ -24,14 +26,19 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
   final _lastData = List<num>.filled(8, 0.0);
 
   Uint8List _lastFrame = Uint8List(8);
+  VisualizerConfiguration? _currentConfig;
 
   @override
   void initState() {
     super.initState();
+    _soundFrequencyMeter.getConfig().then((config) {
+      _currentConfig = config;
+    });
+
     final connectionProvider = context.read<BluetoothConnectionCubit>();
 
     frameUpdater = Timer.periodic(
-      const Duration(milliseconds: 40),
+      const Duration(milliseconds: 70),
       (_) {
         connectionProvider.sendByteFrame(_lastFrame);
       },
@@ -64,6 +71,20 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pulse'),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              final config = await Navigator.pushNamed<VisualizerConfiguration>(
+                  context, ConfigScreen.route,
+                  arguments: _currentConfig);
+              if (config != null) {
+                _currentConfig = config;
+                _soundFrequencyMeter.setConfig(config);
+              }
+            },
+            icon: const Icon(Icons.settings),
+          )
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(8),
@@ -115,7 +136,7 @@ class DataPainter extends CustomPainter {
       if (data.elementAt(i) > lastData.elementAt(i)) {
         value = data.elementAt(i);
       } else {
-        value = math.max(lastData.elementAt(i) - 0.5, 0);
+        value = math.max(lastData.elementAt(i) - 0.2, 0);
       }
 
       lastData[i] = value.toDouble();
@@ -138,7 +159,7 @@ class DataPainter extends CustomPainter {
       int row = 0;
 
       for (int j = 0; j < lastData.length; j++) {
-        if (lastData[j] >= (8 - i)) {
+        if (lastData[j].round() >= (8 - i)) {
           row |= 1 << (7 - j);
         }
       }
