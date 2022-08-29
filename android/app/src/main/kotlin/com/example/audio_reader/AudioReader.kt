@@ -1,4 +1,4 @@
-package com.example.cyber_jacket
+package com.example.audio_reader
 
 import android.annotation.SuppressLint
 import android.media.AudioRecord
@@ -8,10 +8,10 @@ class AudioReader(private val config: AudioReaderConfiguration, onData: (data: B
     @SuppressLint("MissingPermission")
     private val recorder: AudioRecord =
         AudioRecord(
-        AudioReaderConfiguration.audioSource,
+            AudioReaderConfiguration.audioSource,
         config.sampleRate,
-        AudioReaderConfiguration.channelConfig,
-        AudioReaderConfiguration.audioFormat,
+            AudioReaderConfiguration.channelConfig,
+            AudioReaderConfiguration.audioFormat,
         config.readsNumber,
     )
 
