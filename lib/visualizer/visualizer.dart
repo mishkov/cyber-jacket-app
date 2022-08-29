@@ -12,6 +12,8 @@ import 'visualizer_configuration.dart';
 typedef ColumnsListener = void Function(Float64List? columns);
 
 class Visualizer {
+  static const maxColumnHeight = 8.0;
+
   final _controllerChannel = const MethodChannel('visualizer_controller');
   final _eventChannel = const EventChannel('visualizer');
 
