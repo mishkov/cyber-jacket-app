@@ -24,7 +24,7 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
   final _visualizer = Visualizer();
   MatrixVisualizer? _matrixVisualizer;
 
-  Float64List _data = Float64List(0);
+  Float64List _data = Float64List(8);
   VisualizerConfiguration? _currentConfig;
 
   @override
@@ -39,6 +39,12 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
     _matrixVisualizer = MatrixVisualizer(bluetooth: bluetooth);
 
     intFrequencyListener();
+  }
+
+  @override
+  void dispose() {
+    _matrixVisualizer?.stop();
+    super.dispose();
   }
 
   void intFrequencyListener() {
