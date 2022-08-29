@@ -38,7 +38,7 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
     final bluetooth = context.read<BluetoothConnectionCubit>();
     _matrixVisualizer = MatrixVisualizer(bluetooth: bluetooth);
 
-    intFrequencyListener();
+    initColumnsListener();
   }
 
   @override
@@ -47,7 +47,7 @@ class _VisualizerModeScreenState extends State<VisualizerModeScreen> {
     super.dispose();
   }
 
-  void intFrequencyListener() {
+  void initColumnsListener() {
     _visualizer.addListener((data) {
       if (data == null) return;
       if (!mounted) return;
